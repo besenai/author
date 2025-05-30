@@ -1,0 +1,377 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mắt Biếc - Nguyễn Nhật Ánh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f5f5;
+    }
+    h1, h2, h3 {
+      font-family: 'Playfair Display', serif;
+    }
+    .hero-section {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1512820790803-83ca96011d06?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Hiệu ứng hover cho nút CTA */
+    .cta-button {
+      transition: all 0.3s ease;
+    }
+    .cta-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    /* Hiệu ứng cho hình ảnh tác giả */
+    .author-image {
+      transition: transform 0.5s ease;
+    }
+    .author-image:hover {
+      transform: rotate(5deg) scale(1.05);
+    }
+    /* Hiệu ứng cho trích dẫn */
+    .quote {
+      transition: transform 0.4s ease, background-color 0.4s ease;
+    }
+    .quote:hover {
+      transform: scale(1.03);
+      background-color: rgba(255, 215, 0, 0.1);
+    }
+    /* Slider styles */
+    .slider {
+      position: relative;
+      overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+    }
+    .slide {
+      min-width: 100%;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .slide.active {
+      opacity: 1;
+    }
+    .slider-nav {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+    }
+    .slider-nav button {
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .slider-nav button:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    .slider-dots {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+    }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin: 0 5px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .dot.active {
+      background: white;
+    }
+    /* Reader Review styles */
+    .review-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .review-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.69);
+    }
+    /* FAQ styles */
+    .faq-item {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .faq-question {
+      cursor: pointer;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+    .faq-question:hover {
+      background-color: #f9fafb;
+    }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .faq-answer.active {
+      max-height: 200px; /* Adjust based on content */
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero-section h-screen flex items-center justify-center text-center text-white">
+    <div class="fade-in">
+      <h1 class="text-5xl md:text-6xl font-bold mb-4">Mắt Biếc</h1>
+      <p class="text-xl md:text-2xl mb-6">Tác phẩm kinh điển của Nguyễn Nhật Ánh</p>
+      <a href="#buy-now" class="cta-button bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-full transition duration-300">Mua ngay</a>
+    </div>
+  </section>
+
+  <!-- Book Images Slider Section -->
+  <section class="py-16 px-4 md:px-16 bg-gray-100">
+    <div class="max-w-4xl mx-auto text-center fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Hình ảnh về Mắt Biếc</h2>
+      <div class="slider">
+        <div class="slides">
+          <img class="slide active" src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Bìa sách Mắt Biếc">
+          <img class="slide" src="https://images.unsplash.com/photo-1512820790803-83ca96011d06?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Cảnh phim Mắt Biếc">
+          <img class="slide" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Hình minh họa Mắt Biếc">
+        </div>
+        <div class="slider-nav">
+          <button onclick="prevSlide()">←</button>
+          <button onclick="nextSlide()">→</button>
+        </div>
+        <div class="slider-dots">
+          <span class="dot active" onclick="goToSlide(0)"></span>
+          <span class="dot" onclick="goToSlide(1)"></span>
+          <span class="dot" onclick="goToSlide(2)"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Book Section -->
+  <section class="py-16 px-4 md:px-16 bg-white">
+    <div class="max-w-4xl mx-auto text-center fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Về cuốn sách</h2>
+      <p class="text-lg text-gray-700 leading-relaxed">
+        *Mắt Biếc* là câu chuyện đầy cảm xúc về tình yêu đơn phương, tuổi trẻ và những nuối tiếc. Với ngòi bút tinh tế, Nguyễn Nhật Ánh đưa người đọc vào thế giới của Ngạn và Hà Lan, nơi tình yêu trong sáng đối mặt với những lựa chọn khắc nghiệt của cuộc đời. Một tác phẩm lay động trái tim hàng triệu độc giả.
+      </p>
+    </div>
+  </section>
+
+  <!-- Quote Section -->
+  <section class="py-16 px-4 md:px-16 bg-gray-100">
+    <div class="max-w-4xl mx-auto text-center fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Trích dẫn nổi bật</h2>
+      <blockquote class="quote text-xl italic text-gray-800 border-l-4 border-yellow-500 pl-4 py-4">
+        “Tôi đứng lặng yên bên bờ sông, nhìn dòng nước trôi qua, mang theo những ký ức về Hà Lan, về những ngày tháng đẹp nhất của đời mình.”
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- Reader Reviews Section -->
+  <section class="py-16 px-4 md:px-16 bg-white">
+    <div class="max-w-4xl mx-auto text-center fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Đánh giá của độc giả</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="review-card bg-gray-50 p-6 rounded-lg shadow-md">
+          <p class="text-lg italic text-gray-700">"Một câu chuyện tình yêu đẹp nhưng day dứt. Tôi đã khóc khi đọc đến những trang cuối."</p>
+          <p class="mt-4 font-bold text-gray-900">– Minh Anh, 25 tuổi</p>
+        </div>
+        <div class="review-card bg-gray-50 p-6 rounded-lg shadow-md">
+          <p class="text-lg italic text-gray-700">"Nguyễn Nhật Ánh đã viết nên một thế giới tuổi trẻ đầy cảm xúc. Rất đáng đọc!"</p>
+          <p class="mt-4 font-bold text-gray-900">– Hoàng Nam, 30 tuổi</p>
+        </div>
+        <div class="review-card bg-gray-50 p-6 rounded-lg shadow-md">
+          <p class="text-lg italic text-gray-700">"Mắt Biếc không chỉ là một cuốn sách, mà là một hành trình cảm xúc."</p>
+          <p class="mt-4 font-bold text-gray-900">– Thu Hà, 22 tuổi</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Author Section -->
+  <section class="py-16 px-4 md:px-16 bg-gray-100">
+    <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center fade-in">
+      <img src="https://images.unsplash.com/photo-1543002588-bfa74002ed7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Nguyễn Nhật Ánh" class="author-image w-48 h-48 rounded-full mb-6 md:mb-0 md:mr-8">
+      <div>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Nguyễn Nhật Ánh</h2>
+        <p class="text-lg text-gray-700 leading-relaxed">
+          Nguyễn Nhật Ánh là một trong những nhà văn được yêu thích nhất Việt Nam, nổi tiếng với những tác phẩm viết về tuổi trẻ và tình yêu. Với văn phong mộc mạc nhưng sâu sắc, ông đã chinh phục trái tim của hàng triệu độc giả qua các tác phẩm như *Mắt Biếc*, *Cho tôi xin một vé đi tuổi thơ*, và *Cô gái đến từ hôm qua*.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-16 px-4 md:px-16 bg-white">
+    <div class="max-w-4xl mx-auto fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">Câu hỏi thường gặp</h2>
+      <div class="faq-item">
+        <div class="faq-question text-lg font-semibold">
+          <span>Mắt Biếc phù hợp với độ tuổi nào?</span>
+          <span>↓</span>
+        </div>
+        <div class="faq-answer text-gray-700">
+          <p>*Mắt Biếc* phù hợp với mọi lứa tuổi, đặc biệt là những ai yêu thích văn học lãng mạn và câu chuyện về tuổi trẻ. Nội dung nhẹ nhàng, sâu sắc, thích hợp cho cả thanh thiếu niên và người lớn.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question text-lg font-semibold">
+          <span>Tôi có thể mua sách ở đâu?</span>
+          <span>↓</span>
+        </div>
+        <div class="faq-answer text-gray-700">
+          <p>Bạn có thể mua *Mắt Biếc* tại các nhà sách trên toàn quốc hoặc qua các nền tảng thương mại điện tử như Tiki, Fahasa, hoặc Shopee.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question text-lg font-semibold">
+          <span>Có phiên bản phim của Mắt Biếc không?</span>
+          <span>↓</span>
+        </div>
+        <div class="faq-answer text-gray-700">
+          <p>Có, *Mắt Biếc* đã được chuyển thể thành phim điện ảnh vào năm 2019, do Victor Vũ đạo diễn. Bộ phim nhận được nhiều lời khen ngợi từ khán giả.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section id="buy-now" class="py-16 px-4 md:px-16 bg-yellow-500 text-center text-white">
+    <div class="fade-in">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Sở hữu Mắt Biếc ngay hôm nay!</h2>
+      <p class="text-lg mb-6">Đừng bỏ lỡ cơ hội trải nghiệm câu chuyện tình yêu đầy cảm xúc này.</p>
+      <a href="https://example.com/buy-mat-biec" class="cta-button bg-white text-yellow-500 font-bold py-3 px-6 rounded-full hover:bg-gray-100 transition duration-300">Mua sách ngay</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-8 px-4 bg-gray-800 text-white text-center">
+    <p>© 2025 Mắt Biếc - Nguyễn Nhật Ánh. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Fade-in animation on scroll
+    document.addEventListener('DOMContentLoaded', () => {
+      const fadeIns = document.querySelectorAll('.fade-in');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      fadeIns.forEach(element => observer.observe(element));
+    });
+
+    // Slider functionality
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const totalSlides = slides.length;
+
+    function updateSlider() {
+      slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === currentSlide);
+      });
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+      });
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateSlider();
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      updateSlider();
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      updateSlider();
+    }
+
+    // Auto-slide every 5 seconds
+    setInterval(nextSlide, 5000);
+
+    // FAQ accordion functionality
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    faqQuestions.forEach(question => {
+      question.addEventListener('click', () => {
+        const answer = question.nextElementSibling;
+        answer.classList.toggle('active');
+      });
+    });
+  </script>
+</body>
+</html>
